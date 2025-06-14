@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kantin Sehat SMKN 22 Jakarta</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body id="body" class="bg-white text-[#2c3e50] font-sans transition-colors duration-300">
+
+  <!-- Tombol Mode Gelap di Kiri Atas -->
+  <div class="absolute top-4 left-4 z-50">
+    <button id="toggleMode" class="bg-[#2c3e50] text-white px-3 py-1 rounded text-sm">🌙 Dark Mode</button>
+  </div>
+
+  <!-- Header -->
+  <header class="text-center py-10 bg-[#ffe5b4] shadow-md">
+    <h1 class="text-4xl font-extrabold mb-2">SMKN 22 Jakarta</h1>
+    
+    <!-- Logo Placeholder -->
+    <div class="w-32 h-32 mx-auto bg-white rounded-full border-4 border-[#2c3e50] my-4 flex items-center justify-center text-sm text-gray-400">
+      LOGO
+    </div>
+
+    <h2 class="text-2xl font-bold mt-4">KANTIN SEHAT</h2>
+    <p class="italic text-md">"Nikmati makanan bergizi, hidup sehat dimulai di sini"</p>
+    <p class="mt-1 text-sm">Disusun oleh <span class="font-semibold">TIM LKS</span></p>
+  </header>
+
+  <!-- Kategori -->
+  <section class="p-4 flex flex-wrap gap-3 justify-center">
+    <button onclick="filterCategory('All')" class="bg-[#2c3e50] text-white px-4 py-2 rounded">Semua</button>
+    <button onclick="filterCategory('Makanan')" class="bg-[#2c3e50] text-white px-4 py-2 rounded">Makanan</button>
+    <button onclick="filterCategory('Minuman')" class="bg-[#2c3e50] text-white px-4 py-2 rounded">Minuman</button>
+    <button onclick="filterCategory('Snack')" class="bg-[#2c3e50] text-white px-4 py-2 rounded">Snack</button>
+  </section>
+
+  <!-- Produk -->
+  <main class="p-6">
+    <div id="products" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
+  </main>
+
+  <!-- Keranjang -->
+  <section class="fixed bottom-0 left-0 right-0 bg-[#ffe5b4] border-t p-4 shadow-inner z-50">
+    <div class="flex justify-between items-center flex-wrap gap-3">
+      <div>
+        <p class="font-semibold">🛒 Total: <span id="cart-total">Rp 0</span></p>
+        <p class="text-sm" id="cart-items">0 item</p>
+      </div>
+      <div class="flex gap-2 items-center">
+        <select id="payment-method" class="p-2 rounded border text-[#2c3e50]">
+          <option value="COD">COD</option>
+          <option value="QRIS">QRIS</option>
+        </select>
+        <button onclick="checkout()" class="bg-[#2c3e50] text-white px-4 py-2 rounded">Checkout</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="mt-24 text-center text-sm text-[#2c3e50] p-4">
+    by <span class="font-semibold">TIM LKS</span>
+  </footer>
+
+  <!-- Script -->
+  <script>
+    const productList = [
+      { id: 1, name: "Nasi Goreng", category: "Makanan", price: 10000, desc: "Nasi goreng pedas ala MyCanteen", img: "https://placehold.co/150?text=Nasi+Goreng" },
+      { id: 2, name: "Mie Ayam", category: "Makanan", price: 9000, desc: "Mie ayam gurih dengan pangsit", img: "https://placehold.co/150?text=Mie+Ayam" },
+      { id: 3, name: "Es Teh Manis", category: "Minuman", price: 5000, desc: "Segelas es teh manis menyegarkan", img: "https://placehold.co/150?text=Es+Teh" },
+      { id: 4, name: "Takoyaki", category: "Snack", price: 5000, desc: "Takoyaki isi sosis, keju dan bakso (4pcs)", img: "https://placehold.co/150?text=Takoyaki" },
+      { id: 5, name: "Soto Mie", category: "Makanan", price: 7000, desc: "Seporsi Soto Mie hangat", img: "https://placehold.co/150?text=Soto+Mie" },
+      { id: 6, name: "Siomay", category: "Snack", price: 5000, desc: "Siomay lengkap dengan bumbu kacang", img: "https://placehold.co/150?text=Siomay" },
+      { id: 7, name: "Bakso", category: "Makanan", price: 8000, desc: "Semangkuk bakso daging", img: "https://placehold.co/150?text=Bakso" },
+      { id: 8, name: "Es Mangga", category: "Minuman", price: 4000, desc: "Es mangga segar", img: "https://placehold.co/150?text=Es+Mangga" },
+      { id: 9, name: "Susu Coklat", category: "Minuman", price: 5000, desc: "Susu coklat dingin", img: "https://placehold.co/150?text=Susu+Coklat" },
+    ];
+
+    let cart = [];
+    let currentCategory = 'All';
+
+    const rupiah = num => 'Rp ' + num.toLocaleString('id-ID');
+
+    function addToCart(id) {
+      const product = productList.find(p => p.id === id);
+      cart.push(product);
+      updateCartUI();
+    }
+
+    function updateCartUI() {
+      const total = cart.reduce((sum, p) => sum + p.price, 0);
+      document.getElementById('cart-total').textContent = rupiah(total);
+      document.getElementById('cart-items').textContent = `${cart.length} item`;
+    }
+
+    function checkout() {
+      if (cart.length === 0) return alert("Keranjang kosong, isi dulu yuk!");
+
+      const payment = document.getElementById('payment-method').value;
+      const total = cart.reduce((sum, p) => sum + p.price, 0);
+      const list = cart.map(p => `- ${p.name} (${rupiah(p.price)})`).join('%0A');
+      const message = `Halo, saya ingin pesan makanan:%0A${list}%0ATotal: ${rupiah(total)}%0AMetode: ${payment}`;
+      const waURL = `https://wa.me/6285810574301?text=${message}`;
+      window.open(waURL, '_blank');
+    }
+
+    function loadProducts() {
+      const container = document.getElementById('products');
+      const filtered = currentCategory === 'All'
+        ? productList
+        : productList.filter(p => p.category === currentCategory);
+      container.innerHTML = filtered.map(p => `
+        <div class="bg-white dark:bg-[#333] rounded-xl shadow-md p-4 flex flex-col items-center transition-colors">
+          <img src="${p.img}" alt="${p.name}" class="w-32 h-32 object-cover rounded-md mb-2"/>
+          <h3 class="text-lg font-bold text-center">${p.name}</h3>
+          <p class="text-sm text-center">${p.desc}</p>
+          <p class="mt-1 font-semibold">${rupiah(p.price)}</p>
+          <button onclick="addToCart(${p.id})" class="mt-2 bg-[#2c3e50] text-white px-3 py-1 rounded">Add to Cart</button>
+        </div>
+      `).join('');
+    }
+
+    function filterCategory(cat) {
+      currentCategory = cat;
+      loadProducts();
+    }
+
+    // Mode Terang/Gelap
+    document.getElementById("toggleMode").addEventListener("click", () => {
+      const body = document.getElementById("body");
+      const isDark = body.classList.toggle("bg-[#1a1a1a]");
+      body.classList.toggle("text-white");
+      document.getElementById("toggleMode").textContent = isDark ? "☀️ Light Mode" : "🌙 Dark Mode";
+    });
+
+    loadProducts();
+  </script>
+
+</body>
+</html>
